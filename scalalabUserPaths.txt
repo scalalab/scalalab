@@ -1,0 +1,2 @@
+defaultToolboxes/WebCam.jar
+defaultToolboxes/ScalaXYApacheCommons.jar
