@@ -1,0 +1,112 @@
+
+
+import jcuda._
+import jcuda.jcublas.JCublas
+
+
+import jcuda.jcublas.JCublas2._
+import jcuda.jcublas.cublasOperation.CUBLAS_OP_N
+import jcuda.runtime.JCuda._
+
+import jcuda.jcublas.cublasHandle
+
+import scalaSci.jcublas._
+import scalaSci.jcublas.FloatMatrix._
+
+   /**
+     * Implementation of sgemm using JCublas
+     *  C = alpha * A * B + beta * C 
+     */
+    def sgemmJCublas(m: Int, n: Int, k: Int, alpha: Float, A: Array[Float], B: Array[Float], beta: Float, C: Array[Float]) = 
+    {
+   
+   // leading dimensions
+     var lda = m
+     var ldb = n
+     var ldc = m
+     
+          // Create a CUBLAS handle
+        var handle = new cublasHandle()
+        cublasCreate(handle)
+
+        // Allocate memory on the device
+        var  d_A = new Pointer()
+        var  d_B = new Pointer()
+        var  d_C = new Pointer()
+        cudaMalloc(d_A, m * n * Sizeof.FLOAT)
+        cudaMalloc(d_B, n * k * Sizeof.FLOAT)
+        cudaMalloc(d_C, m * k * Sizeof.FLOAT)
+        
+        // Copy the memory from the host to the device
+        cublasSetVector(m*n, Sizeof.FLOAT, Pointer.to(A), 1, d_A, 1)
+        cublasSetVector(n*k, Sizeof.FLOAT, Pointer.to(B), 1, d_B, 1)
+        cublasSetVector(m*k, Sizeof.FLOAT, Pointer.to(C), 1, d_C, 1)
+
+        // Execute sgemm
+        var  pAlpha = Pointer.to( Array(alpha))
+        var  pBeta = Pointer.to(Array(beta))
+        cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, k, 
+            pAlpha, d_A, lda, d_B, ldb, pBeta, d_C, ldc)
+
+        // Copy the result from the device to the host
+        cublasGetVector(m*k, Sizeof.FLOAT, d_C, 1, Pointer.to(C), 1)
+
+        // Clean up
+        cudaFree(d_A)
+        cudaFree(d_B)
+        cudaFree(d_C)
+        cublasDestroy(handle)
+    }
+
+    
+
+
+class JM(var flvals: FloatMatrix)  extends scalaSci.jcublas.FloatMatrix(flvals.data) {
+	var mrows = flvals.rows
+    var mcolumns = flvals.columns
+    
+  def *( B: JM) = {
+    var Arows = this.mrows
+    var Acols = this.mcolumns
+    var Brows = B.mrows
+    var Bcols = B.mcolumns
+    
+    var Cf = FloatMatrix.zeros(Arows, Bcols)
+    
+    var C = new JM(Cf)
+  
+    var km = new CUDAOps.KernelOps()
+    km.cmmg(this.flvals.data, B.flvals.data, C.flvals.data, Acols, Arows, Bcols)
+   
+    /*var alpha = 1.0f; var beta = 0.0f
+    sgemmJCublas(Arows, Acols, Bcols, alpha, this.flvals.data, B.flvals.data, beta, C.flvals.data)
+    */
+
+    C
+    }
+	
+}  
+
+// test
+
+var Ar = 2000; var Ac = 1000; var Br = Ac; var Bc = 500 // dimensions
+var af = FloatMatrix.ones(Ar, Ac)
+var bf = FloatMatrix.ones(Br, Bc)
+var A = new JM(af) 
+var B = new JM(af)
+
+// test GPU ( mine is: NVIDIA GeForce 650 Ti BOOST)
+tic
+var C = A*B
+var tmCUDA = toc
+
+javax.swing.JOptionPane.showMessageDialog(null, "time JCUDA = "+tmCUDA)
+
+// test Java
+var Aj = ones0(Ar, Ac)
+var Bj = ones0(Br, Bc)
+tic
+var Cj = Aj*Bj
+var tmJava = toc
+
+javax.swing.JOptionPane.showMessageDialog(null, "time Java = "+tmJava)

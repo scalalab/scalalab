@@ -1,0 +1,95 @@
+
+import java.util.Random
+import jcuda.jcufft._
+import edu.emory.mathcs.jtransforms.fft.FloatFFT_1D
+
+//  Creates an array of the specified size, containing some random data
+     
+    def  createRandomFloatData( x: Int) = 
+    {
+        var random = new Random(1)
+        var  a = new Array[Float](x)
+        var i = 0
+        while (i < x)
+        {
+                a(i) =  random.nextFloat()
+                i += 1
+        }
+        a
+    }
+
+
+
+    // Compares the given result against a reference, and returns whether the
+    // error norm is below a small epsilon threshold
+  def  isCorrectResult(result: Array[Float], reference: Array[Float]) =
+    {
+        var errorNorm = 0.0f
+        var refNorm = 0.0f
+        var i = 0
+        while (i < result.length)
+        {
+                var diff = reference(i) - result(i)
+          errorNorm += diff * diff
+          refNorm += reference(i) * result(i)
+          i += 1 
+        }
+        errorNorm = Math.sqrt(errorNorm).asInstanceOf[Float]
+        refNorm =  Math.sqrt(refNorm).asInstanceOf[Float]
+        if (Math.abs(refNorm) < 1e-6)
+        {
+            false
+        }
+        else  {        
+                if (errorNorm / refNorm < 1e-6f) true else false 
+                }
+    
+}
+
+// Test the 1D C2C transform with the given size.
+
+        var size = 1 << 20
+        println("Creating input data...")
+        var  input = createRandomFloatData(size * 2)
+
+        println("Performing 1D C2C transform with JTransforms...")
+        var  outputJTransforms = input.clone()
+        var fftj = new FloatFFT_1D(size)
+        tic
+        fftj.complexForward(outputJTransforms)
+        var tmjtransforms = toc
+        var doubleData = new Array[Double](size)
+        var k=0
+        while (k<size) { doubleData(k) = outputJTransforms(k); k+=1}
+        
+        tic 
+        var xfft = fft(doubleData)
+        var tmScala = toc
+        
+        println("Performing 1D C2C transform with JCufft...")
+        var  outputJCufft = input.clone()
+        var  plan = new cufftHandle()
+        JCufft.cufftPlan1d(plan, size, cufftType.CUFFT_C2C, 1)
+        tic
+        JCufft.cufftExecC2C(plan, outputJCufft, outputJCufft, JCufft.CUFFT_FORWARD)
+        var tmfftcuda = toc
+        
+        JCufft.cufftDestroy(plan)
+
+
+        var  passed = isCorrectResult(outputJTransforms, outputJCufft)
+        println("passed = "+ passed+ ", time JTransforms = "+tmjtransforms+", timeScala = "+tmScala+", time FFT CUDA = "+tmfftcuda)
+
+ // use now the JCUBLAS
+tic
+var xxf = jcufft(input)
+var tmjcublas = toc
+
+
+
+
+
+
+
+
+

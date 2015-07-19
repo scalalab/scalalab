@@ -1,0 +1,105 @@
+
+val  N = 200
+
+// number of fit coefficients 
+val NCOEFFS = 12
+
+// nbreak = ncoeffs + 2 - k = ncoeffs - 2 since k = 4 
+val  NBREAK =  (NCOEFFS - 2)
+
+ val n = N
+ val ncoeffs = NCOEFFS
+ val nbreak = NBREAK
+  
+  gsl_rng_env_setup()
+  var r = gsl_rng_alloc(gsl_rng_default)
+
+  // allocate a cubic bspline workspace (k = 4) 
+  var bw = gsl_bspline_alloc(4, nbreak)
+  var B = gsl_vector_alloc(ncoeffs)
+
+  var x = gsl_vector_alloc(n)
+  var y = gsl_vector_alloc(n)
+  var X = gsl_matrix_alloc(n, ncoeffs)
+  var c = gsl_vector_alloc(ncoeffs)
+  var w = gsl_vector_alloc(n)
+  var cov = gsl_matrix_alloc(ncoeffs, ncoeffs)
+  var mw = gsl_multifit_linear_alloc(n, ncoeffs)
+
+  println("#m=0,S=0\n")
+  /* this is the data to be fitted */
+  for (i <- 0 until n)
+    {
+      var  xi = (15.0 / (N - 1)) * i
+      var  yi = cos(xi) * exp(-0.1 * xi)
+
+      var sigma = 0.1 * yi
+      var dy = gsl_ran_gaussian(r, sigma)
+      yi += dy
+
+      gsl_vector_set(x, i, xi)
+      gsl_vector_set(y, i, yi)
+      gsl_vector_set(w, i, 1.0 / (sigma * sigma))
+
+      println(" xi = "+xi +", yi = "+yi)
+    }
+
+  // use uniform breakpoints on [0, 15] 
+  gsl_bspline_knots_uniform(0.0, 15.0, bw)
+
+  // construct the fit matrix X 
+  for (i <- 0 until n)
+    {
+      var  xi = gsl_vector_get(x, i)
+
+      // compute B_j(xi) for all j 
+      gsl_bspline_eval(xi, B, bw)
+
+      // fill in row i of X 
+      for (j <- 0 until  ncoeffs)
+        {
+          var Bj = gsl_vector_get(B, j)
+          gsl_matrix_set(X, i, j, Bj)
+        }
+    }
+
+  var chisq = new Array[Double](1)
+  var yi = new Array[Double](1)
+  var yerr = new Array[Double](1)
+  // do the fit 
+  gsl_multifit_wlinear(X, w, y, c, cov, chisq, mw)
+
+
+  var dof = n - ncoeffs
+  var tss = gsl_stats_wtss(w.data, 1, y.data, 1, y.size)
+  var Rsq = 1.0 - chisq / tss
+
+  println("chisq/dof = "+ (chisq/dof) + " Rsq = "+Rsq)
+
+  // output the smoothed curve 
+    var xi = 0.0
+    var lxi = List[Double]()
+    var lyi = List[Double]()
+    while (xi < 15.0){
+        gsl_bspline_eval(xi, B, bw)
+        gsl_multifit_linear_est(B, c, cov, yi, yerr)
+        lxi = xi :: lxi
+        lyi = yi(0) :: lyi
+        xi += 0.1
+        }
+        
+        var valsx = lxi.toArray
+        var valsy = lyi.toArray
+        plot(valsx, valsy)
+        
+
+  gsl_rng_free(r)
+  gsl_bspline_free(bw)
+  gsl_vector_free(B)
+  gsl_vector_free(x)
+  gsl_vector_free(y)
+  gsl_matrix_free(X)
+  gsl_vector_free(c)
+  gsl_vector_free(w)
+  gsl_matrix_free(cov)
+  gsl_multifit_linear_free(mw)

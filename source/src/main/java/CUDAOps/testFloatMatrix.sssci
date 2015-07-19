@@ -1,0 +1,55 @@
+import scalaSci.jcublas._
+import scalaSci.jcublas.FloatMatrix._
+
+    
+
+
+class JMat(var flvals: FloatMatrix)  extends scalaSci.jcublas.FloatMatrix(flvals.data) {
+	var mrows = flvals.rows
+    var mcolumns = flvals.columns
+    
+  def *( B: JMat) = {
+    var Arows = this.mrows
+    var Acols = this.mcolumns
+    var Brows = B.mrows
+    var Bcols = B.mcolumns
+    
+    var Cf = FloatMatrix.zeros(Arows, Bcols)
+    
+    var C = new JMat(Cf)
+  
+    var km = new CUDAOps.KernelOps()
+    km.cmm(this.flvals.data, B.flvals.data, C.flvals.data, Acols, Arows, Bcols)
+   
+    /*var alpha = 1.0f; var beta = 0.0f
+    sgemmJCublas(Arows, Acols, Bcols, alpha, this.flvals.data, B.flvals.data, beta, C.flvals.data)
+    */
+
+    C
+    }
+	
+}  
+
+// test
+
+var Ar = 2000; var Ac = 1000; var Br = Ac; var Bc = 500 // dimensions
+var af = FloatMatrix.ones(Ar, Ac)
+var bf = FloatMatrix.ones(Br, Bc)
+var A = new JMat(af) 
+var B = new JMat(af)
+
+// test GPU ( mine is: NVIDIA GeForce 650 Ti BOOST)
+tic
+var C = A*B
+var tmCUDA = toc
+
+javax.swing.JOptionPane.showMessageDialog(null, "time JCUDA = "+tmCUDA)
+
+// test Java
+var Aj = ones0(Ar, Ac)
+var Bj = ones0(Br, Bc)
+tic
+var Cj = Aj*Bj
+var tmJava = toc
+
+javax.swing.JOptionPane.showMessageDialog(null, "time Java = "+tmJava)

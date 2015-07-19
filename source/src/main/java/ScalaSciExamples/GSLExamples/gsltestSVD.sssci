@@ -1,0 +1,24 @@
+var N= 1500
+
+var A = rand(N,N)
+
+tic
+var Asvd = gslsvd(A)
+var  tmgslsvd = toc
+
+var U = Asvd._1
+var S = diag(Asvd._2)
+var V = Asvd._3
+
+var shouldBeZero = U*S*(V~)-A
+max(max(shouldBeZero))
+
+tic
+var Asvdj = svd(A)
+var tmsvdjava=toc
+
+// use CCMath library
+tic
+var Accsvd = ccsvd(A)
+var tmccsvd = toc
+

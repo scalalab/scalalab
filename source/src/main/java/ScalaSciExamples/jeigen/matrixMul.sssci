@@ -1,0 +1,18 @@
+import jeigen.DenseMatrix
+import jeigen.Shortcuts._
+
+                   
+var N=3000
+var dm1 = ones(N,N)
+
+tic
+var  dd = dm1.mmul(dm1)  // multiply with Eigen
+var tm=toc 
+
+
+
+var dd = Ones(N,N)
+
+tic
+var  dddd = dd*dd // multiply with Java
+var tmj=toc 

@@ -1,0 +1,14 @@
+ 
+
+initLocalHostClient
+
+var N=500
+var x = Rand(N,N)
+
+tic
+var evals = gslServerEig(x)
+var tmGSLsocket = toc   // 1.74 secs
+
+tic
+var evalsJava = eig(x)
+var tmJava = toc  // 16.9 secs

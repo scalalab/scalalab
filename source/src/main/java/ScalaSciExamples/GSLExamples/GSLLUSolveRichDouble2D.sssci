@@ -1,0 +1,20 @@
+
+var N = 1000
+
+var A = rand(N,N)
+
+var b = vrand(N).getv
+
+// solve the system with GSL LU solver
+tic
+var x = A.gsllusolve(b)
+var tmsolveGSLLU = toc
+
+// solve the system with Java
+tic
+var x2 = A.solve(b)
+var tmsolveJava = toc
+
+max(max(abs(x2-x)))  // should be zero or a very small number
+
+

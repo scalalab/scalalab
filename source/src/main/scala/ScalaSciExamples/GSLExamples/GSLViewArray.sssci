@@ -1,0 +1,17 @@
+
+var a = Array(0.11, 0.12, 0.13, 0.21,0.22, 0.23)
+var b = Array[Double](1011, 1012, 1021, 1022, 1031, 1032) 
+var c = Array(0.00, 0.00, 0.00, 0.00)
+
+var A = gsl_matrix_view_array(a, 2, 3)
+var B = gsl_matrix_view_array(b, 3, 2)
+var C = gsl_matrix_view_array(c, 2, 2)
+
+// compute C = A B
+
+
+gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, A.matrix, B.matrix, 0.0, C.matrix)
+
+
+
+ 

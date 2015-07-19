@@ -1,0 +1,15 @@
+
+
+javac Main.java
+javah Main
+
+nvcc -shared -arch=sm_13 -Xcompiler -fPIC, -o KernelOps.so  KernelOps.cu 
+
+
+nvcc -I "C:\Program Files\Java\jdk1.8.0_45\include" -I "C:\Program Files\Java\jdk1.8.0_45\include\win32" -I "C:\Program Files\NVIDIA Corporation\Installer2\CUDASamples_7.0.{87749714-34D4-4DE8-8F1B-107D8698220C}\common\inc" -shared    -Xcompiler -LD -lcublas -lcufft KernelOps.cu
+
+ren a.exe KernelOps.dll
+
+java Main
+
+nvcc -shared -I$CUDA_PATH/samples/common/inc/   -Xcompiler -fPIC, -o KernelOps.so  -LD -lcublas KernelOps.cu

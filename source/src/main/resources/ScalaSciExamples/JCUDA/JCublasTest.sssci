@@ -1,0 +1,160 @@
+/*
+ * JCublas - Java bindings for CUBLAS, the NVIDIA CUDA BLAS library,
+ * to be used with JCuda <br />
+ * http://www.jcuda.org
+ *
+ * Copyright 2009 Marco Hutter - http://www.jcuda.org
+ 
+ */
+
+import java.util.Random
+
+import jcuda._
+import jcuda.jcublas.JCublas
+
+
+import jcuda.jcublas.JCublas2._
+import jcuda.jcublas.cublasOperation.CUBLAS_OP_N
+import jcuda.runtime.JCuda._
+
+import jcuda.jcublas.cublasHandle
+
+/**
+     * Simple implementation of sgemm, using plain Scala
+     */
+ def  sgemmScala(n: Int, alpha: Float, A: Array[Float],  B: Array[Float],  beta: Float,  C: Array[Float]) = 
+ {
+     	var i = 0
+        while  ( i <  n)
+        {
+        	var j = 0
+            while ( j <  n)
+            {
+                var  prod = 0f
+                var k = 0
+                while  ( k <  n)
+                {
+                	prod += A(k * n + i) * B(j * n + k)
+                	k += 1
+                    
+                }
+                C(j * n + i) = alpha * prod + beta * C(j * n + i)
+                j += 1
+            }
+            i += 1
+        }
+    }
+
+ 
+     /**
+     * Creates an array of the specified size, containing some random data
+     */
+     def createRandomFloatData(n: Int) = {
+     	var random = new Random();
+     	var x = new Array[Float](n)
+     	for (i<-0 until n) {
+     		x(i) = random.nextFloat()
+     	}
+     	x
+     }
+     
+
+ 
+    /**
+     * Implementation of sgemm using JCublas
+     */
+    def sgemmJCublas(n: Int, alpha: Float, A: Array[Float], B: Array[Float], beta: Float, C: Array[Float]) = 
+    {
+   var  nn = n * n
+
+          // Create a CUBLAS handle
+       var handle = new cublasHandle()
+        cublasCreate(handle)
+
+        // Allocate memory on the device
+        var  d_A = new Pointer()
+        var  d_B = new Pointer()
+        var  d_C = new Pointer()
+        cudaMalloc(d_A, nn * Sizeof.FLOAT)
+        cudaMalloc(d_B, nn * Sizeof.FLOAT)
+        cudaMalloc(d_C, nn * Sizeof.FLOAT)
+        
+        // Copy the memory from the host to the device
+        cublasSetVector(nn, Sizeof.FLOAT, Pointer.to(A), 1, d_A, 1)
+        cublasSetVector(nn, Sizeof.FLOAT, Pointer.to(B), 1, d_B, 1)
+        cublasSetVector(nn, Sizeof.FLOAT, Pointer.to(C), 1, d_C, 1)
+
+        // Execute sgemm
+        var  pAlpha = Pointer.to( Array(alpha))
+        var  pBeta = Pointer.to(Array(beta))
+        cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, n, n, n, 
+            pAlpha, d_A, n, d_B, n, pBeta, d_C, n)
+
+        // Copy the result from the device to the host
+        cublasGetVector(nn, Sizeof.FLOAT, d_C, 1, Pointer.to(C), 1)
+
+        // Clean up
+        cudaFree(d_A)
+        cudaFree(d_B)
+        cudaFree(d_C)
+        cublasDestroy(handle)
+    }
+
+    
+ 
+    /**
+     * Compares the given result against a reference, and returns whether the
+     * error norm is below a small epsilon threshold
+     */
+    def  isCorrectResult(result: Array[Float], reference: Array[Float]) = 
+    {
+        var  errorNorm = 0.0
+        var  refNorm = 0.0
+        for (i <-  0 until  result.length)
+        {
+            var diff = reference(i) - result(i)
+            errorNorm += diff * diff*1.0
+            refNorm += reference(i) * result(i)
+        }
+        errorNorm =  Math.sqrt(errorNorm)
+        refNorm = Math.sqrt(refNorm);
+        if (Math.abs(refNorm) < 1e-6)
+        {
+            false
+        }
+        (errorNorm / refNorm < 1e-6f);
+    }
+
+
+
+  var n = 3000
+   var  alpha = 0.3f
+    var beta = 0.7f
+    var  nn = n * n
+
+        
+        println("Creating input data...")
+        var h_A  = createRandomFloatData(nn)
+        var h_B = createRandomFloatData(nn)
+        var h_C = createRandomFloatData(nn)
+        var h_C_ref = h_C.clone()
+
+        println("Performing Sgemm with Scala...")
+ 	   tic
+        sgemmScala(n, alpha, h_A, h_B, beta, h_C_ref)
+        var tmScala = toc
+        
+        println("Performing Sgemm with JCublas...")
+        tic
+        sgemmJCublas(n, alpha, h_A, h_B, beta, h_C)
+        var tmJCUDA = toc
+        
+        var passed = isCorrectResult(h_C, h_C_ref)
+        var success = if  (passed) "PASSED" else "FAILED"
+        
+        println("testSgemm "+success+ " timScala = "+tmScala+ " tmJCUDA = "+tmJCUDA)
+        var accelerationFactor = tmScala.toDouble / tmJCUDA.toDouble
+        println("GPU performed  "+ accelerationFactor  +" times faster than CPU")
+
+        
+ 

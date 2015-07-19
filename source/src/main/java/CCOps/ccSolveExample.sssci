@@ -1,0 +1,16 @@
+
+
+var N=2000
+var A = rand(N, N)
+var b = Rand(N)
+
+tic
+var x = ccsolv(A, b)   // solve using CCMath based native routine
+var tmc= toc
+
+
+tic
+var xj = solve(A,b)   // solve using scalaSci routine
+var tmj = toc
+
+A*xj-b

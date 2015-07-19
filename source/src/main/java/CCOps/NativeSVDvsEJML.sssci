@@ -1,0 +1,24 @@
+
+// compares the speed of native SVD using CCMath library with the SVD of the EJML library
+
+var ccObj = scalaExec.Interpreter.NativeLibsObj.ccObj  // get the native object for CCMath based operations
+
+ 
+ var M = 700
+ var N = 700
+ var d = Zeros(N)
+ var MN=M*N
+ var a = Rand(MN)
+ var aa = a.clone
+ var u = Zeros(M*M)
+ var v = Zeros(N*N)
+  tic
+  ccObj.svduv(d, a, u, M, v, N)
+  var tm = toc  // time for native C SVD
+  
+
+var eA = scalaSci.EJML.StaticMathsEJML.wrap( M, N, aa)
+tic
+var (su, sd, sv) = scalaSci.EJML.StaticMathsEJML.svd(eA)
+var tmj = toc   // time for EJML's library SVD
+

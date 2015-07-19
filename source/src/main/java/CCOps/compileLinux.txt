@@ -1,0 +1,4 @@
+g++ -Ofast -fPIC -I/home/sterg/jdk1.8.0_40/include/ -I/home/sterg/jdk1.8.0_40/include/linux  -shared -o CCOpsgcc.so  CCOpsJNI.cpp
+
+clang++ -Ofast -fPIC -I/home/sterg/jdk1.8.0_40/include/ -I/home/sterg/jdk1.8.0_40/include/linux -shared -o CCOps.so  CCOpsJNI.cpp
+

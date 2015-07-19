@@ -1,0 +1,20 @@
+
+var N=400
+
+var x0 = rand0(N,N)
+
+tic
+var x0eig = x0.gsleig
+var tmgsl = toc
+
+var xr = x0.toDoubleArray
+var xrr = new RichDouble2DArray(xr)
+
+tic
+var x0eigr = xrr.gsleig
+var tmgslr = toc
+
+tic
+var xjeig = x0.eig
+var tmjava = toc
+ 

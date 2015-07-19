@@ -1,0 +1,52 @@
+
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.io.ByteArrayInputStream
+import java.io.InputStream
+import java.io.PrintStream
+import java.net.Socket
+import javax.imageio.ImageIO
+import java.io.File
+
+val alarmServerIP = "195.130.94.125"   // specify the IP of  the computer running the WebCam motion detection server, if localhost use: 127.0.0.1
+
+val alarmServerPort = 8000   // port to receive the alarm signal
+val alarmImServerPort = 8001   // port to receive the image
+val motionDetectedFlag = 111.111   // server sends this flag to signal a detected motion alarm
+
+
+var clientSocketAlarm = new Socket(alarmServerIP, alarmServerPort)     // client socket on which to receive the alarm
+var inAlarm = new DataInputStream( clientSocketAlarm.getInputStream())   // input stream for alarm
+var clientSocketIm = new Socket(alarmServerIP, alarmImServerPort)   // client socket on which to receive the images
+var inIm = new  DataInputStream( clientSocketIm.getInputStream())  // input stream for images
+
+
+var alarmCnt = 1
+
+thread {
+    while (true) {
+   var flagMotionDetected = inAlarm.readDouble
+   if (flagMotionDetected == motionDetectedFlag) {
+     println("ALARM!!!")
+    
+    tone(400,1000)
+ 
+     var byteImage = new Array[Byte](100000)
+             
+      var bytesRead =  inIm.read(byteImage)
+          
+      var inS = new ByteArrayInputStream(byteImage)
+
+      var bufferedImage = ImageIO.read(inS)
+
+      var alarmFile = scalaExec.Interpreter.GlobalValues.jarFilePath+java.io.File.pathSeparator+"ClientAlarm"+alarmCnt+".jpg"
+      alarmCnt += 1
+      
+      var tmp =  new File(alarmFile)
+       ImageIO.write(bufferedImage, "JPG", tmp)
+   
+      }
+     }
+     
+}     
+ 

@@ -1,0 +1,17 @@
+
+var N=1000
+
+var A = rand(N,N)
+
+var b = vrand(N).getv
+
+tic
+var x = A.gslsvdsolve(b)
+var tmgslsvd = toc
+
+tic
+var xj = A.solve(b)
+var tmjava = toc
+
+
+A*x-b 

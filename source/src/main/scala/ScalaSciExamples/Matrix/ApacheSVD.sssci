@@ -1,0 +1,25 @@
+
+
+import org.apache.commons.math3.linear.Array2DRowRealMatrix
+import org.apache.commons.math3.linear.SingularValueDecomposition
+
+var N = 1000
+
+// construct a 2-D array
+var x = Rand(N, N)
+
+// construct also an Array2DRowRealMatrix from it
+var rmx = new Array2DRowRealMatrix(x)
+
+// compute its SVD
+tic
+var asvd = new org.apache.commons.math3.linear.SingularValueDecomposition(rmx)
+var tmapache = toc
+
+var S = asvd.getS  // singular values
+var V = asvd.getV
+var U = asvd.getU
+
+tic
+var dsvd = svd(x)
+var tm=toc

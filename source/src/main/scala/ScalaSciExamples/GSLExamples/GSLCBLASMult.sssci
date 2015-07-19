@@ -1,0 +1,15 @@
+
+var N=200
+var M = 1500
+var K = 2500
+var a = Ones(N*M)
+var b = Ones(M*K)
+var c = new Array[Double](N*K)
+
+// compute C = A B
+
+gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, a, b, 0.0, c)
+
+
+
+

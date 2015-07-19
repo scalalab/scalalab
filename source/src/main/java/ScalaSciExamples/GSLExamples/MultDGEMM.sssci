@@ -1,0 +1,31 @@
+
+  var M = 2200
+  var N = 2400
+  var K = 2500
+  
+  
+  var A = Ones(M*N)
+  var  lda = N
+  
+  var B = Ones(N*K)
+  var  ldb = K
+  
+  var C = Ones(M*K)
+
+  var ldc = K
+  /* Compute C = A B */
+
+tic
+  cblas_dgemm (CblasRowMajor, 
+               CblasNoTrans, CblasNoTrans, M, K, N,
+               1.0, A, lda, B, ldb, 0.0, C, ldc)
+var tm=toc   // time for CBLAS
+
+
+// compare with native ScalaLab matrix multiplication
+var Aj = Ones(M,N)
+var Bj = Ones(N, K)
+
+tic
+var Cj = Aj*Bj
+var tmj = toc 

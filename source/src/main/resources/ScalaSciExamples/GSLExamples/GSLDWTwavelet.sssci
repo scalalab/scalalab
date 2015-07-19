@@ -1,0 +1,21 @@
+ var N = 256
+ var nc = 20
+ var data = new Array[Double](N)
+ var abscoeff = new Array[Double] (N)
+ var p = new Array[Double](N) // * sizeof (size_t));
+
+
+  var w = gsl_wavelet_alloc (gsl_wavelet_daubechies, 4)
+  var work = gsl_wavelet_workspace_alloc (N)
+
+var k=0
+while (k<N) {
+    data(k)= sin(0.78*k)
+    k+=1
+    }
+    
+    figure(1); subplot(2,1,1); plot(data, "Original Data")
+    
+  gsl_wavelet_transform_forward (w, data, 1, N, work)
+ 
+ subplot(2,1,2); plot(data, "Wavelet Transformed Data")

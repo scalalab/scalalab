@@ -1,0 +1,21 @@
+
+// test the CUDA multiplication *@ operator
+
+var ARows = 500; var ACols = 502; var BRows = ACols;
+var BCols = 501; var CRows = ARows; var CCols = BCols;
+
+
+var A = ones(ARows, ACols)
+var B = ones(BRows, BCols)
+
+tic
+var C = A*B
+var tmScala = toc
+
+tic
+var Cc = A *@ B
+var tmCUDA = toc
+
+max(max(Cc-C))
+
+Intel (Core 2) Q2660, 2.4 Gz , NVIDIA GeForce 8600 GT, Scala is about 5 times faster in matrix multiplication!

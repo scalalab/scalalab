@@ -1,0 +1,11 @@
+// illustrates a Discrete Wavelet Transform using CUDA
+var N=2<<12
+var x = new Array[Float](N)
+for (k<-0 until N)  x(k)= rand.toFloat
+
+var cudasig = scalaExec.Interpreter.NativeLibsObj.cudaSigObj
+
+var  dwtx = new Array[Float](N)
+cudasig.cudadwt(x, N, dwtx)
+
+plot(dwtx)

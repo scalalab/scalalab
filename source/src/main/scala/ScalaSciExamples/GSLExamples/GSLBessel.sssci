@@ -1,0 +1,7 @@
+
+var x =9.8
+
+var t = -8::0.01::8
+gsl_sf_bessel_J0
+
+var yy = t map gsl_sf_bessel_J0

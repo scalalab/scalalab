@@ -1,0 +1,15 @@
+
+
+// parallel map in place example
+var N=3000
+
+object fo {
+def f(x: Double) = 10*x   // the function to map
+}
+
+var x = fill(N, N, 2)   // fill the array with some value
+
+x pmapi fo.f   // map the function in-place
+
+x.max.max ==x.min.min  // should hold, since the resulted array must be also constant
+

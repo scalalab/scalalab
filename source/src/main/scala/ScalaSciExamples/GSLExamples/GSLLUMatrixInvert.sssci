@@ -1,0 +1,19 @@
+// test matrix inversion
+var N=2000
+var x = rand(N,N)
+
+tic
+var xi = x.gslluinvert
+var tmgsl = toc
+
+tic
+var xij = inv(x)
+var tmj = toc
+
+xi-xij
+x*xi
+
+
+
+
+

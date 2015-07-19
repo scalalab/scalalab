@@ -1,0 +1,99 @@
+
+import java.util._
+
+import jcuda._
+import jcuda.jcudpp._
+import jcuda.runtime._
+
+/**
+ * This is a sample class demonstrating the application of JCudpp for
+ * performing a sort of an integer array with 1000000 elements.
+ */
+public class JCudppSample
+{
+    public static void main(String args[])
+    {
+        testSort(1000000);
+    }
+    
+    // Test the JCudpp sort operation for an array of size n
+        println("Creating input data")
+        var N=100
+        var array = createRandomIntData(N)
+
+        
+        var arrayRef = array.clone
+
+        println("Performing sort with Java...")
+        Arrays.sort(arrayRef)
+
+        println("Performing sort with JCudpp...")
+        sort(array);
+     
+        boolean passed = Arrays.equals(array, arrayRef);
+        System.out.println("testSort "+(passed?"PASSED":"FAILED")); 
+        return passed;
+    }
+    
+    //
+     * Implementation of sort using JCudpp
+     * 
+     * @param array The array to sort
+     */
+    def private static void sort(int array[])
+    {
+        int n = array.length;
+        
+        // Allocate memory on the device
+        Pointer d_keys = new Pointer();
+        JCuda.cudaMalloc(d_keys, n * Sizeof.INT);
+        
+        // Copy the input array from the host to the device
+        JCuda.cudaMemcpy(d_keys, Pointer.to(array), n * Sizeof.INT, 
+            cudaMemcpyKind.cudaMemcpyHostToDevice);
+        
+        // Create a CUDPPConfiguration for a radix sort of
+        // an array of ints 
+        CUDPPConfiguration config = new CUDPPConfiguration();
+        config.algorithm = CUDPPAlgorithm.CUDPP_SORT_RADIX;
+        config.datatype = CUDPPDatatype.CUDPP_UINT;
+        config.op = CUDPPOperator.CUDPP_ADD;
+        config.options = CUDPPOption.CUDPP_OPTION_KEYS_ONLY;
+        
+        // Create a CUDPPHandle for the sort operation
+        CUDPPHandle theCudpp = new CUDPPHandle();
+        JCudpp.cudppCreate(theCudpp);
+        CUDPPHandle handle = new CUDPPHandle();
+        JCudpp.cudppPlan(theCudpp, handle, config, n, 1, 0);
+        
+        // Execute the sort operation
+        JCudpp.cudppSort(handle, d_keys, null, n);
+
+        Arrays.fill(array, 0);
+        
+        // Copy the result from the device to the host
+        JCuda.cudaMemcpy(Pointer.to(array), d_keys, n * Sizeof.INT, 
+            cudaMemcpyKind.cudaMemcpyDeviceToHost);
+
+        // Clean up
+        JCudpp.cudppDestroyPlan(handle);
+        JCudpp.cudppDestroy(theCudpp);
+        JCuda.cudaFree(d_keys);
+        
+    }
+
+    // Creates an array of the specified size, containing some random data
+ def  createRandomIntData(n: Int) =
+    {
+    	   var  random = new Random(0)
+        var  x= new Array[Int](n)
+        var  i = 0
+        while (i < n) {
+            x(i) = random.nextInt(10)
+            i += 1
+        }
+        x
+}
+
+    
+}

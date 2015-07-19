@@ -1,0 +1,43 @@
+
+import org.bytedeco.javacpp.DoublePointer
+
+// dimensions of matrices
+var  M = 2000
+var N = 1900
+var K = 2100
+
+// create sample arrays of 1s as matrices
+  var  a = Ones(M*N)
+  var  xa = new DoublePointer(a: _*)
+
+  var  b = Ones(N*K)
+  var  xb = new DoublePointer(b: _*)
+
+  var c = Ones(M*K)
+  var xc = new DoublePointer(c: _*)
+  
+  
+  var A = gsl_matrix_view_array(xa, M, N)
+  var B = gsl_matrix_view_array(xb, N, K)
+  var C = gsl_matrix_view_array(xc, M, K)
+
+  /* Compute C = A B */
+
+  tic 
+  gsl_blas_dgemm (CblasNoTrans, CblasNoTrans,
+                  1.0, A.matrix, B.matrix,
+                  0.0, C.matrix)
+  var tmGLS = toc                
+      
+      // get now the matrix
+      
+   var Cs = new RichDouble2DArray(M, K)
+   
+      for (rows <- 0 until M )
+       for (cols <-  0 until  K)
+          Cs(rows, cols) =  C.matrix.data.get(rows*K+cols)
+          
+          
+          
+         
+       

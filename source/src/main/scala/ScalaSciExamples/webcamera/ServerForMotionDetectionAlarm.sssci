@@ -1,0 +1,139 @@
+import java.awt.Dimension
+import java.awt.FlowLayout
+import javax.swing.JFrame
+import javax.swing.JLabel
+import javax.swing.SwingUtilities
+import com.github.sarxos.webcam._
+
+import java.awt.image.BufferedImage
+
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.io.InputStream
+import java.io.PrintStream
+import java.net.ServerSocket
+import java.net.Socket
+import java.io.File
+import javax.imageio.ImageIO
+import java.io.ByteArrayOutputStream
+import javax.imageio.ImageIO
+import java.io.InputStream
+
+val PortForAlarmServer = 8000  // port on which the alarm server waits
+val PortForImageServer = 8001  // port on which the alarm server waits for images
+val motionDetectedFlag = 111.111 // send this value to signal alarm to the client
+
+  //   variables for handling the alarm signal
+var sc = new ServerSocket(PortForAlarmServer)    //  ServerSocket on which the motion detection alarm server waits
+var conn: Socket = null  // socket for accepting client connections
+var in: DataInputStream = null        // input stream for alarm signal
+var out: DataOutputStream =  null     // output stream for alarm signal 
+
+  //   variables for handling the transmitted images from the web camera
+var scIm = new ServerSocket(PortForImageServer)    //  ServerSocket on which the motion detection alarm server waits for images
+var connIm: Socket = null  // socket for accepting client connections for images
+var outIm: DataOutputStream =  null // output stream for senting images from web camera to the client in case of motion detection event 
+
+
+// convert a Java BufferedImage to byte array for network transfer
+   def toByteArrayUsingJava(originalImage: BufferedImage)  = { 
+    var  baos = new ByteArrayOutputStream()   // construct a byte array output stream
+    ImageIO.write( originalImage, "jpg", baos )   // write the image to that stream
+    baos.flush()
+    var  imageInByte = baos.toByteArray()    // convert the contents to byte array
+    baos.close()
+    
+    imageInByte       // return the byte array
+ }
+ 
+// this thread initializes the proper streams with the client
+// when such client has requested the alarm service
+ thread {
+     conn = sc.accept()  // accept a connection for signaling motion detection alarm
+     out = new DataOutputStream(conn.getOutputStream())  // stream to send the alarm signal
+  }
+
+  // this thread initializes the proper streams with the client
+// when such client has requested the images
+ thread {
+     connIm = scIm.accept()  // accept a connection for transmitting acquiring images to the client in case of motion detection
+     outIm = new DataOutputStream(connIm.getOutputStream())  // stream to send the images
+  }
+  
+
+var motionDetector = new DetectMotionExample
+
+class DetectMotionExample extends JFrame with  Runnable with WebcamMotionListener {
+   var alarmCnt = 1
+   var INTERVAL = 100  // ms
+
+
+   var  webcam = Webcam.getDefault()
+   
+        
+        var  updater = new Thread(this, "updater-thread")
+        updater.setDaemon(true)
+        updater.start()
+             
+                
+        setTitle("Motion Detector")
+        setLayout(new FlowLayout())
+
+        webcam.setViewSize(new Dimension(640, 480))
+
+        var panel = new WebcamPanel(webcam)   // the panel for displaying the Web camera image stream
+
+        add(panel)
+
+        pack()
+        setVisible(true)
+        
+        override def  run() = {
+
+                var  detector = new WebcamMotionDetector(webcam)
+                detector.setInterval(INTERVAL)
+                detector.addMotionListener(this)
+                detector.start()
+
+                        
+                }
+
+  override def motionDetected( wme: WebcamMotionEvent) {
+                //println("Detected motion I, alarm turn on you have");
+  //java.awt.Toolkit.getDefaultToolkit().beep()
+   tone(400,1000)
+
+    var alarmFile = scalaExec.Interpreter.GlobalValues.jarFilePath+java.io.File.pathSeparator+"Alarm"+alarmCnt+".jpg"
+    alarmCnt+=1
+   var image = webcam.getImage
+   var tmp =  new File(alarmFile)
+	ImageIO.write(image, "JPG", tmp)
+   
+//  a thread to sent the alarm over the internet connection using sockets
+   thread {
+       if (out != null) {
+     out.writeDouble(motionDetectedFlag) 
+     out.flush       
+      }
+      
+     }
+
+
+//  a thread to sent the image over the internet connection using sockets
+   thread {
+   
+       if (outIm != null) {
+       var byteImage = toByteArrayUsingJava(image)
+        println("writing "+byteImage.length+ " bytes to client ")
+       outIm.write(byteImage) 
+     outIm.flush       
+     
+      }
+      
+     }
+
+  }
+         
+        }
+        
+         

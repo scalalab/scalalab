@@ -1,0 +1,30 @@
+
+var n= 2^^^22
+  
+  var  data = vrand(n).getv
+  var cpdata = data.clone  
+    
+
+  var work = gsl_fft_real_workspace_alloc (n)
+  var real = gsl_fft_real_wavetable_alloc (n);
+
+  tic
+  gsl_fft_real_transform (cpdata, 1, n, real, work);
+  var tmgsl = toc
+  
+
+  gsl_fft_real_wavetable_free (real)
+  
+  
+  
+  
+  subplot(2,1,1); plot(new Vec(cpdata)(10::2000), "GSL FFT, time = "+tmgsl)
+  
+  tic
+  var jfft = fft(data)
+  var tmj = toc
+  
+  subplot(2,1,2); plot(new Vec(jfft._1)(10::2000), "Java FFT, time =  "+tmj)
+  
+
+  

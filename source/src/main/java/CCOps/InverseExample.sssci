@@ -1,0 +1,35 @@
+
+// test the C inverse operation
+// EJML demonstrates smaller times 
+// since its matrix representation is a linear array
+// well suited to the CCMath library
+// 
+var N = 1000
+
+// test for RichDouble2DArrays
+var x = rand(N,N)
+var xx = x.clone
+
+tic
+var y = ccinv(x)
+var tmc = toc
+
+
+tic
+var yj = inv(xx)
+var tmj = toc
+
+
+
+// test for EJML matrices
+
+var ex = scalaSci.EJML.StaticMathsEJML.rand0(N,N)   // create an EJML random matrix
+var cex = ex.clone
+
+tic
+var yx = scalaSci.EJML.StaticMathsEJML.ccinv(ex)
+var tmejml = toc
+
+
+ 
+cex*yx

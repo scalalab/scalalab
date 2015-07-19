@@ -1,0 +1,28 @@
+
+var N = 3000
+var M = 3000
+var K = 3000
+var a = new Array[Double](N*M)
+var b = new Array[Double](M*K)
+var c= new Array[Double](N*K)
+
+var k=0
+while (k< N*M) {
+  a(k)=1.0
+  k += 1
+  }
+k=0
+while (k< M*K) {
+  b(k)=1.0
+  k += 1
+  }
+  
+tic
+jeigen.JeigenJna.Jeigen.dense_multiply(N, M, K, a, b, c)
+var tm=toc
+
+c
+var xx = rand(N,N)
+tic
+var xxx = xx*xx
+var tmj = toc

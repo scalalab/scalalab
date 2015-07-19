@@ -1,0 +1,30 @@
+
+var N=16*512*512
+var data = vrand(N)+0.2*sin( 145.3* linspace(0, 1, N))
+plot(data)
+
+tic
+var (reNative, imNative) = scalaSci.FFT.FFTScala.nfft(data)
+var tmNative = toc
+
+
+    
+tic
+var (reJava, imJava) = scalaSci.FFT.FFTScala.fft(data)
+var tmJava=toc
+
+
+// evaluate using the DSP library
+tic
+var (reJavaDSP, imJavaDSP) = scalaSci.FFT.FFTScala.dfft(data)
+var tmJavaDSP=toc
+
+figure(1); subplot(3,1,1); plot( reJava(0,200), "Java FFT, time = "+tmJava)
+subplot(3,1,2); plot( reJavaDSP(0,200), "Java FDSP FT, time = "+tmJavaDSP)
+subplot(3,1,3); plot( reNative(0,200), "Native FFT, time = "+tmNative)
+
+
+// Intel Core2 Quad 2.4Gz:
+// SciLab : 6.1
+// MATLAB 8.0: 0.4
+// tmJava: 1.7, tmDFT: 0.76

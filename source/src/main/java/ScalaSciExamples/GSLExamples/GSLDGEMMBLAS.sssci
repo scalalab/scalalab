@@ -1,0 +1,27 @@
+
+  var  lda = 3
+
+  var  A = Array( 0.11, 0.12, 0.13,
+                0.21, 0.22, 0.23 )
+
+  var ldb = 2
+ 
+  var  B = Array(1011, 1012.0,
+                1021, 1022,
+                1031, 1032 )
+
+  var ldc = 2
+
+  var  C = Array(0.00, 0.00,
+                0.00, 0.00 )
+
+  var Av = gsl_matrix_view_array(A, 2, 3)
+  var Bv = gsl_matrix_view_array(B, 3, 2)
+  var Cv = gsl_matrix_view_array(C, 2, 2)
+
+  /* Compute C = A B */
+
+  gsl_blas_dgemm (CblasNoTrans, CblasNoTrans,
+                  1.0, Av.matrix, Bv.matrix,
+                  0.0, Cv.matrix)
+                   
